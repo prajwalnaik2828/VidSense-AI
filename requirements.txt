@@ -1,0 +1,12 @@
+ultralytics
+opencv-python-headless
+sentence-transformers
+chromadb
+python-dotenv
+google-genai
+numpy
+pillow
+fastapi
+uvicorn[standard]
+python-multipart
+requests

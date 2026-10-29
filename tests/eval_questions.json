@@ -1,0 +1,28 @@
+[
+  {
+    "question": "TODO: How many people are in the video?",
+    "source_name": "TODO: replace_with_your_source_name.mp4",
+    "expect": {
+      "type": "count",
+      "cls": "person",
+      "value": 5,
+      "tolerance": 1
+    }
+  },
+  {
+    "question": "TODO: When does a car appear?",
+    "source_name": "TODO: replace_with_your_source_name.mp4",
+    "expect": {
+      "type": "found_at",
+      "ts_start": 10.0,
+      "ts_end": 25.0
+    }
+  },
+  {
+    "question": "TODO: Show me an elephant wearing sunglasses",
+    "source_name": "TODO: replace_with_your_source_name.mp4",
+    "expect": {
+      "type": "not_found"
+    }
+  }
+]

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VidSense AI - Video Search & Real-Time Intelligence</title>
+  <meta name="description" content="CPU-optimized intelligent video search and real-time computer vision detection backend with natural language question answering, tracking, and clip generation.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Background Glow Accents -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="23 7 16 12 23 17 23 7"></polygon>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">VidSense<span class="brand-highlight">AI</span></span>
+          <span class="brand-subtitle">Vision Intelligence Core</span>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs" aria-label="Main Navigation">
+        <button id="nav-btn-search" class="nav-tab active" data-tab="search" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          Search & Query
+        </button>
+        <button id="nav-btn-library" class="nav-tab" data-tab="library" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          Video Library
+          <span id="badge-source-count" class="tab-badge">0</span>
+        </button>
+        <button id="nav-btn-live" class="nav-tab" data-tab="live" type="button">
+          <span class="live-dot-mini"></span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+          Live Studio
+        </button>
+        <button id="nav-btn-info" class="nav-tab" data-tab="info" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          System Info
+        </button>
+      </nav>
+
+      <!-- System Status & Settings -->
+      <div class="header-actions">
+        <div id="server-status-pill" class="status-pill status-checking" title="Connecting to backend...">
+          <span class="status-indicator"></span>
+          <span id="server-status-text" class="status-text">Checking...</span>
+        </div>
+        <button id="btn-api-key-modal" class="btn-icon" title="Configure API Key" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="app-main">
+
+    <!-- TAB 1: SEARCH & QUERY -->
+    <section id="section-search" class="tab-section active">
+      <div class="hero-banner">
+        <h1 class="hero-title">Search Video in <span class="gradient-text">Natural Language</span></h1>
+        <p class="hero-desc">Ask about people, vehicles, timestamped events, or counts. Grounded answers derived from deterministic tracking and semantic scene understanding.</p>
+      </div>
+
+      <!-- Search Box Card -->
+      <div class="glass-card search-card">
+        <form id="form-search" class="search-form" onsubmit="return false;">
+          <div class="search-input-wrapper">
+            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input 
+              id="input-query" 
+              class="search-input" 
+              type="text" 
+              placeholder="e.g., 'How many people are there?', 'When does a car appear?', 'Someone in red jacket'" 
+              autocomplete="off" 
+              required
+            />
+            <button id="btn-search-clear" class="btn-clear" type="button" title="Clear text" style="display: none;">&times;</button>
+          </div>
+
+          <div class="search-controls-row">
+            <div class="source-select-group">
+              <label for="select-search-source" class="select-label">Target Video:</label>
+              <select id="select-search-source" class="custom-select">
+                <option value="">All Indexed Videos</option>
+              </select>
+            </div>
+
+            <button id="btn-search-submit" class="btn btn-primary" type="submit">
+              <span class="btn-text">Execute Search</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </div>
+        </form>
+
+        <!-- Suggested Prompt Chips -->
+        <div class="prompt-chips">
+          <span class="chips-label">Try asking:</span>
+          <button class="chip" data-prompt="Where was the person wearing a yellow shirt and carrying a backpack?" type="button">"Person in yellow shirt with backpack"</button>
+          <button class="chip" data-prompt="Show me the sedan car" type="button">"Sedan car"</button>
+          <button class="chip" data-prompt="Where is the dog?" type="button">"Where is the dog?"</button>
+          <button class="chip" data-prompt="How many people are in the video?" type="button">"How many people?"</button>
+          <button class="chip" data-prompt="Who was carrying a suitcase or trolley bag?" type="button">"Carrying suitcase"</button>
+        </div>
+      </div>
+
+      <!-- Search State: Loading Shimmer -->
+      <div id="search-loading" class="search-loading-container" style="display: none;">
+        <div class="loader-pulse"></div>
+        <p class="loader-text">Analyzing query with neural router & scanning video indices...</p>
+      </div>
+
+      <!-- Search Results Container -->
+      <div id="search-results-area" class="results-area" style="display: none;">
+        <!-- Synthesis Answer Card -->
+        <div id="card-answer-box" class="glass-card answer-card">
+          <div class="answer-header">
+            <div class="answer-status">
+              <span id="badge-found-status" class="badge badge-success">Grounded Answer</span>
+              <span id="label-match-count" class="match-count-label">0 results</span>
+            </div>
+          </div>
+          <div id="text-answer-content" class="answer-text"></div>
+        </div>
+
+        <!-- Matched Tracks / Timestamps Grid -->
+        <div class="matches-section-header">
+          <h2 class="section-title">Timeline Matches & Continuous Video Clips</h2>
+          <span class="section-subtitle">Retrieved video sections from starting till ending when object was in the frame</span>
+        </div>
+        <div id="grid-search-matches" class="matches-grid">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: VIDEO LIBRARY -->
+    <section id="section-library" class="tab-section">
+      <div class="section-header-row">
+        <div>
+          <h1 class="page-title">Video Library & Ingestion</h1>
+          <p class="page-desc">Upload video files for background tracking (YOLO + ByteTrack) and periodic scene captioning.</p>
+        </div>
+        <button id="btn-refresh-sources" class="btn btn-secondary" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6"></path>
+            <path d="M1 20v-6h6"></path>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          Refresh
+        </button>
+      </div>
+
+      <!-- Drag and Drop Upload Card -->
+      <div id="dropzone-video" class="glass-card dropzone-card">
+        <input id="input-video-file" type="file" accept=".mp4,.mov,.avi,.mkv" style="display: none;" />
+        <div class="dropzone-content">
+          <div class="dropzone-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+          </div>
+          <h3 class="dropzone-title">Drag & drop video file or <span class="browse-link">browse</span></h3>
+          <p class="dropzone-subtitle">Supported formats: MP4, MOV, AVI, MKV (Maximum size: 500 MB)</p>
+          <div class="dropzone-pills">
+            <span class="pill-tag">Auto Object Tracking</span>
+            <span class="pill-tag">Vision-Language Captions</span>
+            <span class="pill-tag">Vector Embedding</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload In-Progress Progress Bar -->
+      <div id="upload-progress-card" class="glass-card upload-progress-card" style="display: none;">
+        <div class="upload-progress-info">
+          <span id="upload-file-name" class="upload-name">video.mp4</span>
+          <span id="upload-percentage" class="upload-percent">0%</span>
+        </div>
+        <div class="progress-bar-track">
+          <div id="upload-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
+        </div>
+        <span id="upload-status-detail" class="upload-detail">Uploading chunk stream to server...</span>
+      </div>
+
+      <!-- Sources Grid -->
+      <div class="library-grid-header">
+        <h2 class="section-title">Indexed Sources</h2>
+      </div>
+      <div id="grid-sources" class="sources-grid">
+        <!-- Rendered by app.js -->
+      </div>
+    </section>
+
+    <!-- TAB 3: LIVE STUDIO -->
+    <section id="section-live" class="tab-section">
+      <div class="section-header-row">
+        <div>
+          <h1 class="page-title">Live Studio & Real-Time Computer Vision</h1>
+          <p class="page-desc">Connect USB webcams, network streams, local video files, or push frames from your browser camera.</p>
+        </div>
+      </div>
+
+      <div class="live-studio-layout">
+        <!-- Live Video Display Viewport -->
+        <div class="live-viewport-container glass-card">
+          <div class="live-viewport-header">
+            <div class="live-status-pill-group">
+              <span id="live-indicator-dot" class="live-pulse-dot inactive"></span>
+              <span id="live-session-badge" class="live-badge-label">OFFLINE</span>
+            </div>
+            <div id="live-source-title" class="live-source-name">No active stream</div>
+          </div>
+
+          <div class="viewport-screen">
+            <!-- Server MJPEG Stream element -->
+            <img id="img-live-mjpeg" class="live-video-player" src="" alt="Live Video Feed" style="display: none;" />
+
+            <!-- Browser Push Mode elements (hidden video + canvas) -->
+            <video id="video-local-camera" class="local-cam-preview" autoplay playsinline muted style="display: none;"></video>
+            <canvas id="canvas-push-render" class="push-canvas" style="display: none;"></canvas>
+
+            <!-- Placeholder Screen when not streaming -->
+            <div id="live-placeholder-screen" class="live-empty-screen">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+              </svg>
+              <h3>Live Camera is Idle</h3>
+              <p>Select your camera input on the right and click "Start Live Session".</p>
+            </div>
+          </div>
+
+          <!-- Real-Time Live Telemetry HUD -->
+          <div class="live-hud-bar">
+            <div class="hud-item">
+              <span class="hud-label">FPS</span>
+              <span id="hud-val-fps" class="hud-value">0.0</span>
+            </div>
+            <div class="hud-item">
+              <span class="hud-label">Active Tracks</span>
+              <span id="hud-val-tracks" class="hud-value">0</span>
+            </div>
+            <div class="hud-item">
+              <span class="hud-label">Duration</span>
+              <span id="hud-val-elapsed" class="hud-value">00:00</span>
+            </div>
+            <div class="hud-item">
+              <span class="hud-label">Captions Indexed</span>
+              <span id="hud-val-captions" class="hud-value">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Controls & Real-Time Event Stream -->
+        <div class="live-sidebar">
+          <!-- Session Controls Card -->
+          <div class="glass-card live-controls-card">
+            <h3 class="card-heading">Stream Configuration</h3>
+
+            <div class="form-group">
+              <label for="select-camera-mode" class="form-label">Input Source Type:</label>
+              <select id="select-camera-mode" class="custom-select">
+                <option value="0">Default USB Webcam (Device Index 0)</option>
+                <option value="1">Secondary USB Webcam (Device Index 1)</option>
+                <option value="push">Browser Webcam (Client Push Mode)</option>
+                <option value="file">Server Video File (Simulate Camera)</option>
+                <option value="stream">RTSP / Network Stream URL</option>
+              </select>
+            </div>
+
+            <div id="group-custom-path" class="form-group" style="display: none;">
+              <label for="input-custom-camera-path" class="form-label">Custom Path / Stream URL:</label>
+              <input id="input-custom-camera-path" class="custom-input" type="text" placeholder="e.g. tests/videos/sample.mp4 or rtsp://..." />
+            </div>
+
+            <div class="form-group">
+              <label for="input-live-name" class="form-label">Session Name:</label>
+              <input id="input-live-name" class="custom-input" type="text" value="Live Studio Camera" />
+            </div>
+
+            <div class="live-button-row">
+              <button id="btn-start-live" class="btn btn-emerald btn-block" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Start Live Session
+              </button>
+              <button id="btn-stop-live" class="btn btn-crimson btn-block" type="button" style="display: none;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="6" y="6" width="12" height="12"></rect>
+                </svg>
+                Stop & Save Session
+              </button>
+            </div>
+          </div>
+
+          <!-- Real-Time WebSocket Event Feed -->
+          <div class="glass-card live-events-card">
+            <div class="events-card-header">
+              <h3 class="card-heading">Live Detections Feed</h3>
+              <span id="badge-event-seq" class="seq-badge">Seq: 0</span>
+            </div>
+            <div id="live-events-feed" class="events-scroll-container">
+              <div class="event-feed-empty">No live detections yet</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: SYSTEM INFO & SETTINGS -->
+    <section id="section-info" class="tab-section">
+      <h1 class="page-title">System Architecture & Diagnostics</h1>
+      <p class="page-desc">Hardware configurations, CPU models, and backend system health metrics.</p>
+
+      <div class="info-grid">
+        <div class="glass-card info-card">
+          <h3>Engine Specifications</h3>
+          <ul class="info-list">
+            <li><strong>Execution Mode:</strong> CPU-Only (Zero GPU/CUDA dependencies)</li>
+            <li><strong>YOLO Vision Model:</strong> YOLO11n (COCO 80 classes, PyTorch CPU)</li>
+            <li><strong>Multi-Object Tracker:</strong> ByteTrack (Persistent Track IDs)</li>
+            <li><strong>Vision Captioning:</strong> Google Gemini Vision API</li>
+            <li><strong>Vector Embeddings:</strong> sentence-transformers (all-MiniLM-L6-v2)</li>
+            <li><strong>Vector Storage:</strong> ChromaDB (HNSW Cosine Similarity)</li>
+            <li><strong>Metadata Database:</strong> SQLite WAL mode (tracks, sources, captions)</li>
+          </ul>
+        </div>
+
+        <div class="glass-card info-card">
+          <h3>Quick Performance Tuning</h3>
+          <p class="card-desc">If CPU usage is high on low-powered machines, configure these in <code>vidsense/config.py</code>:</p>
+          <ul class="info-list">
+            <li><code>YOLO_IMGSZ</code>: 416 &rarr; 320 or 256 for faster inference</li>
+            <li><code>FILE_PROCESS_FPS</code>: 5.0 &rarr; 2.0 or 1.0 for faster video uploads</li>
+            <li><code>LIVE_PROCESS_FPS</code>: 5.0 &rarr; 3.0 for reduced live camera load</li>
+            <li><code>CAPTION_INTERVAL_S</code>: 10 &rarr; 30 to minimize external API quota</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL: Video Clip Player -->
+  <div id="modal-clip-player" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-clip-title" class="modal-title">Video Clip Playback</h3>
+        <button id="btn-close-modal" class="btn-close" type="button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="clip-video-wrapper">
+          <video id="video-clip-element" controls autoplay loop playsinline>
+            Your browser does not support HTML5 video.
+          </video>
+        </div>
+        <div id="modal-clip-meta" class="modal-meta-row"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: API Key Configuration -->
+  <div id="modal-api-key" class="modal-overlay" style="display: none;">
+    <div class="modal-card modal-sm">
+      <div class="modal-header">
+        <h3 class="modal-title">API Key Security</h3>
+        <button id="btn-close-key-modal" class="btn-close" type="button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">If your <code>.env</code> file specifies an <code>API_KEY</code>, enter it here. It is saved in your browser's local storage and passed in all HTTP and WebSocket requests.</p>
+        <div class="form-group">
+          <label for="input-api-key" class="form-label">Secret API Key:</label>
+          <input id="input-api-key" class="custom-input" type="password" placeholder="Enter API_KEY from .env (leave blank if empty)" />
+        </div>
+        <div class="modal-actions">
+          <button id="btn-save-api-key" class="btn btn-primary btn-block" type="button">Save Key</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- App Script -->
+  <script src="/static/app.js"></script>
+</body>
+</html>

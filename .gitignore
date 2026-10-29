@@ -1,0 +1,39 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables & secrets (CRITICAL: never commit actual keys)
+.env
+.env.*
+!.env.example
+
+# Runtime & database data
+data/
+*.db
+*.sqlite3
+*.log
+
+# Neural model weights & checkpoints (auto-downloaded on first run)
+*.pt
+*.pth
+*.onnx
+*.bin
+
+# Test videos (keeps folder tracked, ignores personal/test media)
+tests/videos/*
+!tests/videos/.gitkeep
+
+# IDEs & Editor configurations
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
