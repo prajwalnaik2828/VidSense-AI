@@ -9,6 +9,10 @@ A CPU-only AI backend that makes video searchable in natural plain English. User
 - **Zero-Hallucination Query Routing**:
   - Counting queries (*"How many people are there?"*) and temporal queries (*"When does a car appear?"*) are answered directly from deterministic SQLite object tracking tables.
   - Descriptive queries (*"Show me someone in a red jacket"*) perform vector similarity search over scene caption embeddings in ChromaDB, synthesized strictly from grounded context. Unanswerable questions return a polite, explicit not-found message.
+- **Visual Attribute Highlighting & Keyframe Tagging**:
+  - Extracts and displays keyframe images highlighting matching objects and persons with colored bounding boxes and corner target locks.
+  - Automatically identifies and tags appearance details: clothing colors (upper/lower), vehicle subtypes, and carried accessories (e.g., `"black shirt"`, `"white bag"`, `"trolley bag"`).
+  - Pinpoints the exact timestamp when each entity first appeared in the video and provides an interactive clip player.
 - **Real-Time Live Streaming & Ingestion**:
   - Ingests from USB webcams, RTSP/HTTP streams, local files, or browser/mobile client WebSockets ("push mode").
   - Produces an annotated MJPEG stream (~5 fps) and real-time JSON detection events over WebSockets.
@@ -154,6 +158,7 @@ All requests (except `/health` and static media when authorized via query parame
 | `POST` | `/search` | Yes | Natural language query across one or all videos | JSON `{"question": str, "source_id": str\|null}` | 200 `SearchOut` (`answer`, `results`, `found`) |
 | `GET` | `/media/frames/{source_id}/{track_id}.jpg` | Yes | Fetch high-confidence JPEG thumbnail for an object track | Query param `?api_key=...` or Header | 200 `image/jpeg` |
 | `GET` | `/sources/{source_id}/clip` | Yes | Cut and stream an MP4 video clip around a timestamp | Query params `start`, `end`, `api_key` | 200 `video/mp4` |
+| `GET` | `/sources/{source_id}/annotated_frame` | Yes | Extract & render keyframe with highlighted bounding boxes & tags | Query params `ts`, `track_id`, `cls`, `api_key` | 200 `image/jpeg` |
 | `POST` | `/live/start` | Yes | Start a live session (device index, RTSP URL, file, or "push") | JSON `{"camera": str, "name": str\|null}` | 201 `{"source_id": str}` (409 if active) |
 | `POST` | `/live/{source_id}/stop`| Yes | Stop active live session, finalize recording & index | None | 200 `SourceOut` |
 | `GET` | `/live/{source_id}/stats`| Yes | Get real-time live session metrics | None | 200 `{fps, active_tracks, elapsed_s, captions, running}` |
