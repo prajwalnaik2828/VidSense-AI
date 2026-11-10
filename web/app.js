@@ -410,6 +410,16 @@
     }
   }
 
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function renderSearchResults(data) {
     dom.searchResultsArea.style.display = 'block';
 
@@ -439,28 +449,30 @@
       card.className = 'match-card';
 
       const thumbUrl = item.thumbnail_url ? appendApiKey(item.thumbnail_url) : null;
+      const annotatedUrl = item.annotated_image_url ? appendApiKey(item.annotated_image_url) : thumbUrl;
       const clipUrl = item.clip_url ? appendApiKey(item.clip_url) : null;
       const timeStr = `${formatSeconds(item.ts_start)} - ${formatSeconds(item.ts_end)}`;
       const durationS = Math.max(1, Math.round(item.ts_end - item.ts_start));
+      const appearedAt = item.appeared_at || formatSeconds(item.ts_start);
+
+      // Extract tag pills
+      const tags = (item.tags || []).filter(Boolean);
+      const tagPillsHtml = tags.map(t => {
+        let icon = '';
+        const lower = t.toLowerCase();
+        if (lower.includes('person') || lower.includes('man') || lower.includes('woman')) icon = '👤 ';
+        else if (lower.includes('shirt') || lower.includes('pants') || lower.includes('dress') || lower.includes('top')) icon = '👕 ';
+        else if (lower.includes('bag') || lower.includes('backpack') || lower.includes('suitcase')) icon = '🎒 ';
+        else if (lower.includes('car') || lower.includes('sedan') || lower.includes('suv')) icon = '🚗 ';
+        else if (lower.includes('laptop') || lower.includes('computer')) icon = '💻 ';
+        return `<span class="tag-pill">${icon}${escapeHtml(t)}</span>`;
+      }).join('');
 
       card.innerHTML = `
-        ${clipUrl ? `
-          <div class="match-video-wrapper">
-            <video 
-              class="match-video-clip" 
-              src="${clipUrl}" 
-              controls 
-              playsinline 
-              preload="metadata"
-              poster="${thumbUrl || ''}"
-              title="${item.label} (${timeStr})"
-            ></video>
-            <span class="match-time-tag">${timeStr} (${durationS}s span)</span>
-          </div>
-        ` : `
+        <div class="match-media-container" data-clip="${clipUrl || ''}">
           <div class="match-thumb-wrapper">
-            ${thumbUrl ? `
-              <img class="match-thumb-img" src="${thumbUrl}" alt="${item.label}" loading="lazy" />
+            ${annotatedUrl ? `
+              <img class="match-thumb-img match-annotated-img" src="${annotatedUrl}" alt="${escapeHtml(item.label)}" loading="lazy" />
             ` : `
               <div class="match-thumb-fallback">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -470,50 +482,52 @@
                 </svg>
               </div>
             `}
-            <span class="match-time-tag">${timeStr}</span>
+            <div class="match-overlay-header">
+              <span class="match-appeared-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                Appeared at ${appearedAt}
+              </span>
+              <span class="match-span-badge">${timeStr}</span>
+            </div>
+            ${clipUrl ? `
+              <button class="match-play-overlay-btn" type="button" title="Play Video Clip" data-clip="${clipUrl}" data-title="${escapeHtml(item.label)} (${timeStr})">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+              </button>
+            ` : ''}
           </div>
-        `}
+        </div>
 
         <div class="match-content">
-          <div class="match-label">${item.label}</div>
-          <div class="match-source-meta">${item.source_name || item.source_id} &bull; ${item.kind}</div>
+          ${tagPillsHtml ? `<div class="match-tags-row">${tagPillsHtml}</div>` : ''}
+          <div class="match-label">${escapeHtml(item.label)}</div>
+          <div class="match-source-meta">${escapeHtml(item.source_name || item.source_id)} &bull; ${item.kind}</div>
           ${clipUrl ? `
             <div class="match-actions">
-              <button class="btn-clip-play" data-clip="${item.clip_url}" data-title="${item.label} (${timeStr})" type="button">
+              <button class="btn btn-primary btn-clip-play" data-clip="${clipUrl}" data-title="${escapeHtml(item.label)} (${timeStr})" type="button">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                   <polygon points="5 3 19 12 5 21 5 3"></polygon>
                 </svg>
-                Watch In Theater
+                Play Extracted Clip (${durationS}s)
               </button>
             </div>
           ` : ''}
         </div>
       `;
 
-      // Hover preview behavior for the embedded clip
+      // Play button actions
       if (clipUrl) {
-        const videoEl = card.querySelector('.match-video-clip');
-        if (videoEl) {
-          card.addEventListener('mouseenter', () => {
-            if (videoEl.paused) {
-              videoEl.muted = true;
-              videoEl.play().catch(() => {});
-            }
-          });
-          card.addEventListener('mouseleave', () => {
-            if (!videoEl.paused && videoEl.muted) {
-              videoEl.pause();
-            }
-          });
-        }
-
-        const btnTheater = card.querySelector('.btn-clip-play');
-        if (btnTheater) {
-          btnTheater.addEventListener('click', (e) => {
-            const btn = e.currentTarget;
+        const btnPlays = card.querySelectorAll('.btn-clip-play, .match-play-overlay-btn');
+        btnPlays.forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
             openClipModal(btn.dataset.clip, btn.dataset.title);
           });
-        }
+        });
       }
 
       dom.gridSearchMatches.appendChild(card);

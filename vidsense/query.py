@@ -487,13 +487,60 @@ def answer_query(question: str, source_id: str | None) -> dict:
                 for t in matched_tracks:
                     t_aspects = aspect_map.get(t["track_id"], [])
                     t_desc = f" ({', '.join(t_aspects)})" if t_aspects else ""
+
+                    # Extract rich tags for visual pills
+                    tags = []
+                    t_attrs_raw = t.get("attributes", "")
+                    t_attrs = {}
+                    if isinstance(t_attrs_raw, str) and t_attrs_raw.strip():
+                        try:
+                            t_attrs = json.loads(t_attrs_raw)
+                        except Exception:
+                            t_attrs = {}
+                    elif isinstance(t_attrs_raw, dict):
+                        t_attrs = t_attrs_raw
+
+                    if t["cls"] == "person":
+                        tags.append(f"person #{t['track_id']}")
+                        if t_attrs.get("upper_color"):
+                            tags.append(f"{t_attrs['upper_color']} shirt")
+                        if t_attrs.get("lower_color"):
+                            tags.append(f"{t_attrs['lower_color']} pants")
+                        if t_attrs.get("accessories"):
+                            for a in t_attrs["accessories"]:
+                                if a not in tags:
+                                    tags.append(a)
+                    elif t["cls"] in ("car", "truck", "bus"):
+                        if t_attrs.get("subtype"):
+                            tags.append(t_attrs["subtype"])
+                        if t_attrs.get("primary_color"):
+                            tags.append(f"{t_attrs['primary_color']} {t['cls']}")
+                        else:
+                            tags.append(f"{t['cls']} #{t['track_id']}")
+                    else:
+                        if t_attrs.get("primary_color"):
+                            tags.append(f"{t_attrs['primary_color']} {t['cls']}")
+                        else:
+                            tags.append(f"{t['cls']} #{t['track_id']}")
+
+                    for asp in t_aspects:
+                        if asp not in tags:
+                            tags.append(asp)
+
+                    best_ts = float(t.get("best_ts", t["first_ts"]))
                     results.append({
                         "source_id": t["source_id"],
                         "source_name": t.get("source_name") or "",
                         "kind": "track",
+                        "track_id": int(t["track_id"]),
+                        "cls": t["cls"],
                         "ts_start": float(t["first_ts"]),
                         "ts_end": float(t["last_ts"]),
+                        "best_ts": best_ts,
+                        "appeared_at": fmt_ts(t["first_ts"]),
+                        "time_span": f"{fmt_ts(t['first_ts'])} - {fmt_ts(t['last_ts'])}",
                         "label": f"{t['cls']} #{t['track_id']}{t_desc}",
+                        "tags": tags,
                         "thumbnail": t.get("thumb_path") or None,
                     })
 
@@ -541,13 +588,20 @@ def _answer_semantic(question: str, search_text: str, source_id: str | None) -> 
     for c in captions:
         src = db.get_source(c["source_id"])
         s_name = src["name"] if src else ""
+        c_ts = float(c["ts"])
         results.append({
             "source_id": c["source_id"],
             "source_name": s_name,
             "kind": "caption",
-            "ts_start": float(c["ts"]),
-            "ts_end": float(c["ts"] + config.CAPTION_INTERVAL_S),
+            "track_id": None,
+            "cls": None,
+            "ts_start": c_ts,
+            "ts_end": float(c_ts + config.CAPTION_INTERVAL_S),
+            "best_ts": c_ts,
+            "appeared_at": fmt_ts(c_ts),
+            "time_span": f"{fmt_ts(c_ts)} - {fmt_ts(c_ts + config.CAPTION_INTERVAL_S)}",
             "label": c["text"],
+            "tags": [c["text"][:35] if len(c["text"]) > 35 else c["text"]],
             "thumbnail": None,
         })
 

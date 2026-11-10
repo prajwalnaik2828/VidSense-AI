@@ -174,9 +174,14 @@ class SearchResultItem(BaseModel):
     kind: str
     ts_start: float
     ts_end: float
+    appeared_at: str | None = None
+    time_span: str | None = None
     label: str
+    tags: list[str] = []
     thumbnail_url: str | None = None
+    annotated_image_url: str | None = None
     clip_url: str | None = None
+    track_id: int | None = None
 
 
 class SearchOut(BaseModel):
@@ -377,6 +382,12 @@ def search_endpoint(body: SearchIn):
         thumb = r.get("thumbnail")
         thumb_url = f"/media/frames/{thumb.lstrip('/')}" if thumb else None
 
+        tid = r.get("track_id")
+        best_ts = float(r.get("best_ts", r["ts_start"]))
+        cls_arg = f"&cls={r.get('cls')}" if r.get("cls") else ""
+        tid_arg = f"&track_id={tid}" if tid is not None else ""
+        annotated_url = f"/sources/{sid}/annotated_frame?ts={best_ts:.2f}{tid_arg}{cls_arg}"
+
         if has_clip:
             c_start = max(0.0, float(r["ts_start"]) - config.CLIP_PAD_S)
             c_end = max(float(r["ts_end"]) + config.CLIP_PAD_S, c_start + 1.0)
@@ -386,14 +397,22 @@ def search_endpoint(body: SearchIn):
         else:
             clip_url = None
 
+        appeared_at = r.get("appeared_at") or video_io.fmt_ts(r["ts_start"])
+        time_span = r.get("time_span") or f"{video_io.fmt_ts(r['ts_start'])} - {video_io.fmt_ts(r['ts_end'])}"
+
         results_out.append({
             "source_id": sid,
             "source_name": r.get("source_name", ""),
             "kind": r.get("kind", ""),
+            "track_id": tid,
             "ts_start": float(r["ts_start"]),
             "ts_end": float(r["ts_end"]),
+            "appeared_at": appeared_at,
+            "time_span": time_span,
             "label": r.get("label", ""),
+            "tags": r.get("tags") or [],
             "thumbnail_url": thumb_url,
+            "annotated_image_url": annotated_url,
             "clip_url": clip_url,
         })
 
@@ -465,6 +484,48 @@ def get_media_frame(file_path: str):
     if not os.path.exists(target) or os.path.isdir(target):
         return JSONResponse(status_code=404, content={"error": "Frame not found"})
     return FileResponse(target)
+
+
+@app.get("/sources/{source_id}/annotated_frame")
+def get_annotated_frame_endpoint(
+    source_id: str,
+    ts: float = Query(0.0),
+    track_id: int | None = Query(None),
+    cls: str | None = Query(None),
+):
+    src = db.get_source(source_id)
+    if not src:
+        return JSONResponse(status_code=404, content={"error": f"Source {source_id} not found"})
+
+    frames_dir = os.path.abspath(os.path.join(config.DATA_DIR, "frames", source_id))
+    os.makedirs(frames_dir, exist_ok=True)
+
+    cache_key = f"annotated_{track_id}" if track_id is not None else f"annotated_ts_{int(round(ts * 10))}"
+    cached_file = os.path.join(frames_dir, f"{cache_key}.jpg")
+
+    if os.path.exists(cached_file) and os.path.getsize(cached_file) > 1000:
+        return FileResponse(cached_file, media_type="image/jpeg")
+
+    try:
+        annotated_img = detect.generate_annotated_keyframe(
+            source_id=source_id,
+            ts=ts,
+            track_id=track_id,
+            target_cls=cls,
+        )
+        if annotated_img is not None and annotated_img.size > 0:
+            video_io.save_jpeg(annotated_img, cached_file)
+            return FileResponse(cached_file, media_type="image/jpeg")
+    except Exception as e:
+        logger.warning("Could not generate annotated frame: %s", e)
+
+    # Fallback to standard thumbnail
+    if track_id is not None:
+        raw_thumb = os.path.join(frames_dir, f"{track_id}.jpg")
+        if os.path.exists(raw_thumb):
+            return FileResponse(raw_thumb, media_type="image/jpeg")
+
+    return JSONResponse(status_code=404, content={"error": "Annotated keyframe could not be extracted"})
 
 
 # ---------------- Live Endpoints ----------------
